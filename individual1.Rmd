@@ -1,0 +1,6 @@
+---
+title: "individual1.Rmd"
+author: "Tessa Mendoza"
+date: "11/3/2020"
+output: html_document
+---
