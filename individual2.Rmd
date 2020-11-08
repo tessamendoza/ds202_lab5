@@ -1,28 +1,114 @@
 ---
 title: "individual2.Rmd"
+author: "Becca Barrick"
+date: "11/8/2020"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+acc <- read.csv("https://raw.githubusercontent.com/xdaiISU/ds202materials/master/hwlabs/fars2017/accident.csv", stringsAsFactors = FALSE)
+person <- read.csv("https://raw.githubusercontent.com/xdaiISU/ds202materials/master/hwlabs/fars2017/person.csv", stringsAsFactors = FALSE)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+1) Are there some days of the week where more accidents happen than the others (see FARS manual, use variable DAY_WEEK)?
 
 ```{r cars}
-summary(cars)
+q1 <- acc %>%
+  group_by(DAY_WEEK) %>%
+  summarise(num = n())
+ggplot(q1, aes(x = DAY_WEEK, y = num)) + geom_bar(stat = 'identity') + 
+  labs(x = "Day of the Week", y = "Number of Accidents")
 ```
 
-## Including Plots
+The days of the week where most accidents occur are Friday, Saturday and Sunday. This is likely to happen because people are driving outside of their normal route to work or school and may be unfamiliar with where they are driving. This could also be due to other outside factors like driving at night or even driving under the influence after spending time with friends on the weekend. There is no significant difference between the amount of accidents on these three days but there is a significant difference between these three days and the other days in the middle of the week.
 
-You can also embed plots, for example:
+2) Create a data frame containing the persons who are fatally hurt in the accidents (look up variable INJ_SEV).
 
 ```{r pressure, echo=FALSE}
-plot(pressure)
+q2 <- person %>%
+  filter(INJ_SEV == 4)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+3) Create a data frame containing the most dangerous vehicle make in each state. The number of persons fatally hit in the vehicle make is used to assess the (non-)safety of a make. Make sure to handle the missing values appropriately. (look up variable MAKE).
+
+```{r pressure, echo=FALSE}
+q3 <- q2 %>%
+  filter(!is.na(MAKE)) %>%
+  group_by(STATE, MAKE) %>%
+  summarize(numFatalities = n()) %>%
+  filter(numFatalities == max(numFatalities))
+head(q3)
+``` 
+
+4) Create a map, and label each state with the most dangerous vehicle. Discuss the definition of the most dangerous vehicle, and what you find from the map. (Hint: Read the description for the STATE and COUNTY columns in the FARS manual. The state & county codes are Geographic Locator Codes (GLCs) from the General Services Administration’s (GSA) publication. Use readxl::read_xlsx to read in the GLCs.).
+
+```{r pressure, echo=FALSE}
+codes <- readxl::read_xlsx("FRPP_GLC_-_United_StatesSep292020.xlsx")
+states <- map_data('state')
+
+codes <- codes %>%
+  mutate('State Code' = as.numeric(`State Code`))
+q3 <- q3 %>%
+  inner_join(codes %>% select("State Code", "State Name"), by = c("STATE" = "State Code")) %>%
+  distinct()
+q3$`State Name` <- tolower(q3$'State Name')
+states <- states %>%
+  left_join(q3 %>% select("MAKE", "State Name"), by = c("region"= "State Name"))
+label <- states %>% 
+  group_by(region) %>%
+  summarise(long = mean(long), lat = mean(lat), make = min(MAKE))
+label$make <- factor(label$make, levels = c(12, 20, 49, 37), 
+                     labels = c("Ford", "Chevrolet", "Toyota", "Honda"))
+
+ggplot(states %>% group_by(region), aes(x=long, y=lat)) + 
+  geom_polygon(aes(group=group)) + 
+  geom_text(aes(label = make), size = 2, color = 'white', data = label)
+```
+
+The most dangerous vehicles across America are made by Ford and Chevrolet. This means that most fatal accidents occur in Ford and Chevrolet vehicles. Toyota and Honda are mentioned a few times as well, but not with as much frequency as the other two vehicle makes. 
+
+5) Join the accident and person table (work out which variable(s) to use).
+```{r pressure, echo=FALSE}
+q5 <- person %>%
+  left_join(acc)
+```
+
+
+6) Tally the number of accidents by day of the week (DAY_WEEK), hour of the day (HOUR) and gender (SEX). Visualize the results. 
+```{r pressure, echo=FALSE}
+q6 <- q5 %>%
+  filter(SEX != 8 & SEX != 9) %>%
+  filter(HOUR <= 24) %>%
+  group_by(DAY_WEEK, HOUR, SEX) %>%
+  summarize(total = n())
+
+q6$SEX <- factor(q6$SEX, levels = c(1, 2), 
+                     labels = c("M", "F"))
+q6$DAY_WEEK <- factor(q6$DAY_WEEK, labels = c("Sun", "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat"))
+
+ggplot(q6, aes(x = HOUR, y = total, fill = SEX)) + facet_grid(~DAY_WEEK) + geom_bar(stat = 'identity') +
+  scale_fill_manual(values=c("#1287C9", "#AB3F54")) +
+  labs(x = "Hour of the Day", y = "Number of Accidents")
+```
+
+7) Now plot a choropleth map of the number of deaths on a county level.
+```{r pressure, echo=FALSE}
+#countydeaths <- FRPP_GLC_United_StatesSep292020 %>%
+  #rename(COUNTY = `County Name`) %>%
+  #as.character(acc$COUNTY) %>%
+  #full_join(acc, by='COUNTY')
+  
+#merge(x=FRPP_GLC_United_StatesSep292020, y=acc, by.x=c("COUNTY"),
+     # by.y=c("COUNTY"), all.y=TRUE)
+
+#ggplot(countydeaths, aes(x = LONGITUDE, y = LATITUDE, fill = FATALS)) + geom_polygon(aes(group=group))
+
+``` 
+
+8) Is summer or winter more dangerous? Does this depend on states? Explore and explain.
+```{r pressure, echo=FALSE}
+
+```
+
