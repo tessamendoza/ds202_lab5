@@ -1,0 +1,69 @@
+---
+title: "individual3.Rmd"
+author: "Alec Meyer"
+date: "11/8/2020"
+output: html_document
+---
+```{r}
+library(tidyverse)
+acc <- read.csv("https://raw.githubusercontent.com/xdaiISU/ds202materials/master/hwlabs/fars2017/accident.csv", stringsAsFactors = FALSE)
+person <- read.csv("https://raw.githubusercontent.com/xdaiISU/ds202materials/master/hwlabs/fars2017/person.csv", stringsAsFactors = FALSE)
+```
+
+Question 1<br />
+
+```{r}
+q1 <- acc %>%
+  group_by(DAY_WEEK) %>%
+  summarise(num = n())
+ggplot(q1, aes(x = DAY_WEEK, y = num)) + geom_bar(stat = 'identity') +   labs(x = "Day of Week", y = "Accidents")
+```
+Yes, based on the graph shown, there are more accidents on weekends.
+Question 2 <br />
+
+```{r}
+q2 <- person %>%
+  filter(INJ_SEV == 4)
+```
+
+Question 3<br />
+
+```{r}
+q3 <- q2 %>%
+  filter(!is.na(MAKE)) %>%
+  group_by(STATE, MAKE) %>%
+  summarize(numFatalities = n()) %>%
+  filter(numFatalities == max(numFatalities))
+head(q3)
+```
+
+Question 4<br />  
+```{r}
+states <- map_data('state')
+codes <- readxl::read_xlsx("FRPP_GLC_-_United_StatesSep292020.xlsx")
+codes <- codes %>%
+  mutate('State Code' = as.numeric(`State Code`))
+q3 <- q3 %>%
+  inner_join(codes %>% select("State Code", "State Name"), by = c("STATE" = "State Code")) %>%
+  distinct()
+q3$`State Name` <- tolower(q3$'State Name')
+states <- states %>%
+  left_join(q3 %>% select("MAKE", "State Name"), by = c("region"= "State Name"))
+label <- states %>% 
+  group_by(region) %>%
+  summarise(long = mean(long), lat = mean(lat), make = min(MAKE))
+label$make <- factor(label$make, levels = c(12, 20, 49, 37), 
+                     labels = c("Ford", "Chevrolet", "Toyota", "Honda"))
+ggplot(states %>% group_by(region), aes(x=long, y=lat)) + 
+  geom_polygon(aes(group=group)) + 
+  geom_text(aes(label = make), size = 2, color = 'white', data = label)
+```
+
+Most dangerous vehicle: vehivle make most likely to get in an accident.
+
+Question 5<br />
+```{r}
+q5 <- person %>%
+  left_join(acc)
+```
+
