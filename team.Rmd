@@ -103,24 +103,25 @@ ggplot(q6, aes(x = HOUR, y = total, fill = SEX)) + facet_grid(~DAY_WEEK) + geom_
 
 **7) Now plot a choropleth map of the number of deaths on a county level.**
 
-<<<<<<< HEAD
 ```{r pressure, echo=FALSE}
-countydeaths <- codes %>%
-  rename(COUNTY = `County Code`) %>%
-  mutate('COUNTY' = as.numeric(`COUNTY`)) %>%
-  right_join(acc, by='COUNTY') %>%
-  rename(long = LONGITUD) %>%
-  rename(lat = LATITUDE)
+county <- map_data("county")
+codes$`County Code` <- as.integer(codes$`County Code`)
 
-countydeaths <- countydeaths %>% left_join(county, by=('long'))
+countyDeaths <- q2 %>%
+  group_by(COUNTY) %>%
+  summarise(numDeaths = n()) %>%
+  left_join(codes %>% select ("County Code", "County Name"), by = c('COUNTY' = 'County Code'))
+  
+countyDeaths$`County Name` <- tolower(countyDeaths$`County Name`)
 
-ggplot(countydeaths, aes(x = long, y = lat.x)) + geom_polygon(aes(group=group))
+county <- county %>%
+  left_join(countyDeaths, by = c("subregion" = "County Name"))
+
+ggplot(county, aes(x = long, y = lat, fill = numDeaths)) + geom_polygon(aes(group = group))
 
 ``` 
 
 
-**8) Is summer or winter more dangerous? Does this depend on states? Explore and explain.**
-=======
 **8) Is summer or winter more dangerous? Does this depend on states? Explore and explain.**
 
 
@@ -175,4 +176,3 @@ summerState
 ```
 
 There are four months where winter states have more accidents than summer: Florida, Hawaii, Louisiana, and S. Carolina. The other states all have more summer accidents.
->>>>>>> cb61ebe0674f55ce2cca1abc302e9ecfca31164a
