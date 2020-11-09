@@ -99,9 +99,6 @@ ggplot(q6, aes(x = HOUR, y = total, fill = SEX)) + facet_grid(~DAY_WEEK) + geom_
   #rename(COUNTY = `County Name`) %>%
   #as.character(acc$COUNTY) %>%
   #full_join(acc, by='COUNTY')
-  
-#merge(x=FRPP_GLC_United_StatesSep292020, y=acc, by.x=c("COUNTY"),
-     # by.y=c("COUNTY"), all.y=TRUE)
 
 #ggplot(countydeaths, aes(x = LONGITUDE, y = LATITUDE, fill = FATALS)) + geom_polygon(aes(group=group))
 
