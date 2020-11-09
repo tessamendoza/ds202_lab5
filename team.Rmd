@@ -103,4 +103,19 @@ ggplot(q6, aes(x = HOUR, y = total, fill = SEX)) + facet_grid(~DAY_WEEK) + geom_
 
 **7) Now plot a choropleth map of the number of deaths on a county level.**
 
+```{r pressure, echo=FALSE}
+countydeaths <- codes %>%
+  rename(COUNTY = `County Code`) %>%
+  mutate('COUNTY' = as.numeric(`COUNTY`)) %>%
+  right_join(acc, by='COUNTY') %>%
+  rename(long = LONGITUD) %>%
+  rename(lat = LATITUDE)
+
+countydeaths <- countydeaths %>% left_join(county, by=('long'))
+
+ggplot(countydeaths, aes(x = long, y = lat.x)) + geom_polygon(aes(group=group))
+
+``` 
+
+
 **8) Is summer or winter more dangerous? Does this depend on states? Explore and explain.**
