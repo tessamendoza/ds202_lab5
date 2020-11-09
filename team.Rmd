@@ -103,6 +103,7 @@ ggplot(q6, aes(x = HOUR, y = total, fill = SEX)) + facet_grid(~DAY_WEEK) + geom_
 
 **7) Now plot a choropleth map of the number of deaths on a county level.**
 
+<<<<<<< HEAD
 ```{r pressure, echo=FALSE}
 countydeaths <- codes %>%
   rename(COUNTY = `County Code`) %>%
@@ -119,3 +120,59 @@ ggplot(countydeaths, aes(x = long, y = lat.x)) + geom_polygon(aes(group=group))
 
 
 **8) Is summer or winter more dangerous? Does this depend on states? Explore and explain.**
+=======
+**8) Is summer or winter more dangerous? Does this depend on states? Explore and explain.**
+
+
+```{r}
+winter <- acc %>%
+  filter(between(MONTH, 1, 3) | MONTH == 12)
+
+nrow(winter)
+meanWinter <- nrow(winter) / 4
+meanWinter
+```
+
+```{r}
+summer <- acc %>%
+  filter(between(MONTH, 6, 9))
+
+nrow(summer)
+meanSummer <- nrow(summer) / 4
+meanSummer
+```
+
+There are 10,419 total accidents in the four winter months, which averages 2,604 accidents per month. In the summer, there was 12,273 deaths (mean = 3,068.25) accidents. 
+
+```{r warning=FALSE}
+summerByState <- summer %>%
+  group_by(STATE) %>%
+  summarize(summerCount = n())
+summerByState
+
+winterByState <- winter %>%
+  group_by(STATE) %>%
+  summarize(winterCount = n())
+summerByState
+
+byState <- summerByState %>%
+  inner_join(winterByState, by = ("STATE" = "STATE"))
+byState 
+
+state <- codes %>%
+  select(`State Name`, `State Code`) %>%
+  inner_join(byState, by = c('State Code' = "STATE"))
+
+state <- unique(state)
+state
+winterState <- state %>%
+  filter (winterCount - summerCount > 0)
+winterState
+
+summerState <- state %>%
+   filter (summerCount - winterCount > 0)
+summerState
+```
+
+There are four months where winter states have more accidents than summer: Florida, Hawaii, Louisiana, and S. Carolina. The other states all have more summer accidents.
+>>>>>>> cb61ebe0674f55ce2cca1abc302e9ecfca31164a
