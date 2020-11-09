@@ -70,6 +70,7 @@ ggplot(states %>% group_by(region), aes(x=long, y=lat)) +
 The most dangerous vehicles across America are made by Ford and Chevrolet. This means that most fatal accidents occur in Ford and Chevrolet vehicles. Toyota and Honda are mentioned a few times as well, but not with as much frequency as the other two vehicle makes. 
 
 5) Join the accident and person table (work out which variable(s) to use).
+
 ```{r pressure, echo=FALSE}
 q5 <- person %>%
   left_join(acc)
@@ -77,6 +78,7 @@ q5 <- person %>%
 
 
 6) Tally the number of accidents by day of the week (DAY_WEEK), hour of the day (HOUR) and gender (SEX). Visualize the results. 
+
 ```{r pressure, echo=FALSE}
 q6 <- q5 %>%
   filter(SEX != 8 & SEX != 9) %>%
@@ -94,6 +96,7 @@ ggplot(q6, aes(x = HOUR, y = total, fill = SEX)) + facet_grid(~DAY_WEEK) + geom_
 ```
 
 7) Now plot a choropleth map of the number of deaths on a county level.
+
 ```{r pressure, echo=FALSE}
 countydeaths <- codes %>%
   rename(COUNTY = `County Code`) %>%
@@ -108,7 +111,21 @@ ggplot(countydeaths, aes(x = long, y = lat.x)) + geom_polygon(aes(group=group))
 ``` 
 
 8) Is summer or winter more dangerous? Does this depend on states? Explore and explain.
-```{r pressure, echo=FALSE}
 
+```{r pressure, echo=FALSE}
+winter <- acc %>%
+  filter(between(MONTH, 1, 3) | MONTH == 12)
+
+nrow(winter)
+meanWinter <- nrow(winter) / 4
+meanWinter
+
+summer <- acc %>%
+  filter(between(MONTH, 6, 9))
+
+nrow(summer)
+meanSummer <- nrow(summer) / 4
+meanSummer
 ```
 
+Summer months tend to have higher amounts of accidents. This is surprising and I would assume that adverse winter weather would cause more accidents.
